@@ -12,23 +12,6 @@ def permut(values):
 	return res
 		
 #
-# transform aql query into sql
-def aql2sql(aql_query):
-
-	sql_file = tempfile.NamedTemporaryFile('r')
-	tmp_filename = sql_file.name
-	sql_file.close()
-	cmd_str = "echo " + aql_query.replace('\n', ' ') + " | AQL2SQL > " + tmp_filename
-	os.system(cmd_str)
-		
-	sql_file = open(tmp_filename, 'r')
-	sql_query = ""
-	for line in sql_file:
-		sql_query += line + " " 
-		
-	return sql_query
-		
-#
 #
 def row_comparator(rows1, rows2):
 
