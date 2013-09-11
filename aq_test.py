@@ -1,4 +1,4 @@
-#! /cygdrive/c/Python27/python
+#! /usr/bin/python
 
 import os, sys, getopt, time, math
 
@@ -24,11 +24,11 @@ def print_query(out, msg, aql_query, sql_query, aql_rows, sql_rows):
 
 verbose = False
 aq_db = "TEST_SMALL_ID"
-aq_path = "E:/AQ_DATABASES/DB/"
+aq_path = "~/AQ_DB/"
 msql_host = "localhost"
 msql_user = "tma"
-msql_pass = "AlgoQuest"
-msql_db_name = "test"
+msql_pass = "algoquest"
+msql_db_name = "algoquest"
 
 opts, args = getopt.getopt(
 	sys.argv[1:], 
@@ -57,10 +57,6 @@ for o, a in opts:
 	elif o in ("-v", "--verbose"):
 		verbose = True	
 	
-# for v in util.permut(['. T1 ID', '. T2 ID', '. T3 ID']):
-# 	print v	
-# sys.exit(0)
-	
 if verbose:
 	gen = QueryGenerator.parse(input)
 	for op_name, values in gen.ops.iteritems():
@@ -75,16 +71,9 @@ exec_aql = ExecuteAQL(aq_path, aq_db)
 nb_checked, nb_error = 0, 0
 for aql_query in QueryGenerator.generate(input):
 
-	# print ''
-	# print 'Select Statement : ', ss.selectStmt
-	# print 'From Statement   : ', ss.fromStmt
-	# print 'Where Statement  : '
-	# for conds in ss.whereStmt:
-	# 	print '  ', conds
-	# print 'Group Statement  : ', ss.groupStmt
-	# print 'Order Statement  : ', ss.orderStmt
-	
-	# sql_query = util.aql2sql(aql_query)
+	print ''
+	print '==='
+	print ''
 	
 	print aql_query
 	
@@ -101,8 +90,12 @@ for aql_query in QueryGenerator.generate(input):
 	##################################################
 		
 	nb_checked += 1
-		
+
 	sql_rows = exec_sql.execute(sql_query)
+	print sql_rows
+
+	continue
+
 	aql_rows = exec_aql.execute(aql_query)
 		
 	if verbose:
@@ -111,5 +104,7 @@ for aql_query in QueryGenerator.generate(input):
 	if not util.row_comparator(sql_rows, aql_rows):
 		print_query(sys.stderr, 'ERROR: query failed', aql_query, sql_query, aql_rows, sql_rows)
 		nb_error += 1
-		
+
+print ''		
 print nb_checked, 'queries checked.', nb_checked - nb_error, 'success', nb_error, 'errors'
+print ''

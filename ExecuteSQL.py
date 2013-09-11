@@ -11,7 +11,7 @@ class ExecuteSQL:
 		self.db_name = db_name
 		
 		try:
-			self.con = mdb.connect('localhost', 'tma', 'AlgoQuest', 'test')
+			self.con = mdb.connect(self.host, self.user, self.password, self.db_name)
 			self.cur = self.con.cursor()
 		except mdb.Error, e:
 			print "Error: %d: %s" % (e.args[0], e.args[1])

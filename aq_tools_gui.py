@@ -1,4 +1,4 @@
-#! /cygdrive/c/Python27/python
+#! /usr/bin/python
 
 import wxversion
 wxversion.select("2.8")

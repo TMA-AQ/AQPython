@@ -1,4 +1,4 @@
-#! /cygdrive/c/Python27/python
+#! /usr/bin/python
 
 import os
 import sys
@@ -48,8 +48,9 @@ def generate_ini(db_path, db_name):
 	fini.write('tmp-folder=' + db_path + '/' + db_name + '/data_orga/tmp/' + '\n')
 	fini.write('field-separator=;' + '\n')
 	fini.write('csv-format=1' + '\n')
-	fini.write('aq-engine=E:/AQ_Bin/AQ_Engine.exe' + '\n')
-	fini.write('aq-loader=E:/AQ_Bin/Loader.exe' + '\n')
+	fini.write('aq-engine=AQ_Engine' + '\n')
+	fini.write('aq-loader=AQ_Loader' + '\n')
+	fini.close()
 	return ini_filename
 	
 #
@@ -91,7 +92,8 @@ def generate_base_desc(con, base_desc_filename):
 			fdesc.write(' 1 INT\n')
 			column_id += 1
 		fdesc.write('\n')
-	
+
+	fdesc.close()
 #
 # 
 def export_data(con, dir):
@@ -212,9 +214,9 @@ def import_data(db_ini_filename, packet_size = 1048576):
 #
 if __name__ == '__main__':
 
-	db_path, db_name = 'E:/AQ_DATABASES/DB/', 'test_group_by'
-	db_host, db_user, db_pass, db_name = 'localhost', 'tma', 'AlgoQuest', 'test_group_by'
-	
+	db_path, db_name = '/Users/sessionaq/AQ_DB/', 'algoquest'
+	db_host, db_user, db_pass, db_name = 'localhost', 'tma', 'algoquest', 'algoquest'
+    
 	try:
 	
 		con = mdb.connect(db_host, db_user, db_pass, db_name)
@@ -226,7 +228,7 @@ if __name__ == '__main__':
 		export_data(con, db_path + '/' + db_name + '/data_orga/tables/')
 		
 		import_data(db_ini_filename)
-		import_data(db_path + db_name + '/test_group_by.ini')
+		# import_data(db_path + db_name + '/test_group_by.ini')
 		
 	except ImportError, e:
 		print "Error: %s" % (e.message)
