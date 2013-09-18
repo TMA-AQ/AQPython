@@ -16,11 +16,13 @@ class ImportError(Exception):
 		
 #
 # create directories
-def create_db_directories(db_path, db_name):
+def create_db_directories(db_path, db_name, force=False):
 	dir = db_path + '/' + db_name + '/'
 	if os.path.exists(dir):
-		raise ImportError('directory ' + dir + ' already exist')
-
+		if not force:
+			raise ImportError('directory ' + dir + ' already exist')
+		return
+		
 	d = os.path.dirname(dir + 'base_struct/')
 	os.makedirs(d)
 	d = os.path.dirname(dir + 'calculus/')
@@ -121,6 +123,35 @@ def get_base_data_filename(base, table, column, version, packet):
 
 #
 #
+def clean_aq_database(db_path, db_name):
+	bd_file = db_path + '/' + db_name + '/base_struct/base'
+	if os.path.exists(bd_file):
+		os.remove(bd_file)	
+	
+	dir = db_path + '/' + db_name + '/data_orga/'
+	for f in [ file for file in os.listdir(dir) if os.path.isfile(os.path.join(dir, file)) ]:
+		os.remove(os.path.join(dir, f))
+	
+	dir = db_path + '/' + db_name + '/data_orga/vdg/data/'
+	for f in [ file for file in os.listdir(dir) if os.path.isfile(os.path.join(dir, file)) ]:
+		os.remove(os.path.join(dir, f))
+	
+#
+#
+def	import_aq_database(opts, force=False):
+
+	con = mdb.connect(opts.db_host, opts.db_user, opts.db_pass, opts.db_name)
+	
+	create_db_directories(opts.aq_db_path, opts.aq_db_name, force)
+	db_ini_filename = generate_ini(opts.aq_db_path, opts.aq_db_name, opts.aq_engine, opts.aq_loader)
+
+	generate_base_desc(con, opts.aq_db_name, opts.aq_db_path + '/' + opts.aq_db_name + '/base_struct/base')
+	export_data(con, opts.aq_db_path + '/' + opts.aq_db_name + '/data_orga/tables/')
+	
+	loader.load_data(db_ini_filename)
+
+#
+#
 if __name__ == '__main__':
 
 	parser = OptionParser()
@@ -191,18 +222,7 @@ if __name__ == '__main__':
 		sys.exit(-1)
 	
 	try:
-	
-		con = mdb.connect(opts.db_host, opts.db_user, opts.db_pass, opts.db_name)
-		
-		create_db_directories(opts.aq_db_path, opts.aq_db_name)
-		db_ini_filename = generate_ini(opts.aq_db_path, opts.aq_db_name, opts.aq_engine, opts.aq_loader)
-	
-		generate_base_desc(con, opts.aq_db_name, opts.aq_db_path + '/' + opts.aq_db_name + '/base_struct/base')
-		export_data(con, opts.aq_db_path + '/' + opts.aq_db_name + '/data_orga/tables/')
-		
-		# import_data(db_ini_filename)
-		loader.load_data(db_ini_filename)
-		
+			import_aq_database(opts)
 	except ImportError, e:
 		print "Error: %s" % (e.message)
 	except mdb.Error, e:

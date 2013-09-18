@@ -24,7 +24,13 @@ class ExecuteSQL:
 		
 	#
 	# execute sql query	and get results		
-	def execute(self, query):		
+	def execute_and_commit(self, query):		
+		self.cur.execute(query)
+		self.con.commit()
+
+	#
+	# execute sql query	and get results		
+	def execute_and_fetch(self, query):		
 		self.cur.execute(query)
 		rows = self.cur.fetchall()
 		return rows
