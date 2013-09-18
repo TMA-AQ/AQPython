@@ -7,19 +7,30 @@ import sys
 
 import util
 
-class Frame(wx.Frame):
-	def __init__(self, title):
-		wx.Frame.__init__(self, None, title=title)
-		self.Maximize()
-		self.Bind(wx.EVT_CLOSE, self.OnClose)
+class AQFrame(wx.Frame):
+	def __init__(self, parent, title):
+		super(AQFrame, self).__init__(parent, title=title, size=(1024, 512))
+                self.InitUI()
+                self.Centre()
+		self.Show()
+
+        def InitUI(self):
+                # self.Bind(wx.EVT_CLOSE, self.OnClose)
 
 		# menu bar
 		menuBar = wx.MenuBar()
-		menu = wx.Menu()
-		m_exit = menu.Append(wx.ID_EXIT, "E&xit\tAlt-X", "Close window and exit program.")
-		self.Bind(wx.EVT_MENU, self.OnClose, m_exit)
-		menuBar.Append(menu, "&File")
-		self.SetMenuBar(menuBar)
+		menuFile = wx.Menu()
+		menuEdit = wx.Menu()
+		menuHelp = wx.Menu()
+		# m_exit = menuFile.Append(wx.ID_EXIT, 'E&xit\tAlt-X', 'Close window and exit program.')
+		m_exit = wx.MenuItem(menuFile, wx.ID_EXIT, 'Exit', 'Close Window and exit program.')
+                menuFile.AppendItem(m_exit)
+		menuBar.Append(menuFile, '&File')
+		menuBar.Append(menuEdit, '&Edit')
+		menuBar.Append(menuHelp, '&Help')
+                self.SetMenuBar(menuBar)
+
+		# self.Bind(wx.EVT_MENU, self.OnClose, m_exit)
 
 		# status bar
 		self.statusbar = self.CreateStatusBar()
@@ -27,32 +38,26 @@ class Frame(wx.Frame):
 		panel = wx.Panel(self)
 		box = wx.BoxSizer(wx.HORIZONTAL)
 		
-		# m_text = wx.StaticText(panel, -1, "AQL Query")
-		# m_text.SetFont(wx.Font(14, wx.SWISS, wx.NORMAL, wx.BOLD))
-		# m_text.SetSize(m_text.GetBestSize())
-		# box.Add(m_text, 0, wx.ALL, 10)
-
 		self.m_aql_ctrl = wx.TextCtrl(panel, wx.ID_ANY, "enter aql query", wx.DefaultPosition, wx.DefaultSize, wx.TE_MULTILINE)
 		self.m_sql_ctrl = wx.TextCtrl(panel, wx.ID_ANY, "enter sql query", wx.DefaultPosition, wx.DefaultSize, wx.TE_MULTILINE)
 		
 		buttonPanel = wx.Panel(panel)
 		buttonPanelBox = wx.BoxSizer(wx.VERTICAL)
-		
 		m_aql2sql = wx.Button(buttonPanel, wx.ID_ANY, ">>")
-		m_aql2sql.Bind(wx.EVT_BUTTON, self.OnAQL2SQL)
 		m_sql2aql = wx.Button(buttonPanel, wx.ID_ANY, "<<")
-		m_sql2aql.Bind(wx.EVT_BUTTON, self.OnSQL2AQL)
+                m_aql2sql.Bind(wx.EVT_BUTTON, self.OnAQL2SQL)
+                m_sql2aql.Bind(wx.EVT_BUTTON, self.OnSQL2AQL)
 		
 		buttonPanelBox.AddStretchSpacer(1)
-		buttonPanelBox.Add(m_aql2sql, 0, wx.ALL, -1)
+		buttonPanelBox.Add(m_aql2sql, proportion=0, flag=wx.ALL, border=10)
 		buttonPanelBox.AddSpacer(10)
-		buttonPanelBox.Add(m_sql2aql, 0, wx.ALL, -1)
+		buttonPanelBox.Add(m_sql2aql, proportion=0, flag=wx.ALL, border=10)
 		buttonPanelBox.AddStretchSpacer(1)
 		buttonPanel.SetSizer(buttonPanelBox)
-
-		box.Add(self.m_aql_ctrl, 10, wx.ALL | wx.EXPAND, -1)
-		box.Add(buttonPanel, 1, wx.ALL | wx.EXPAND, -1)
-		box.Add(self.m_sql_ctrl, 10, wx.ALL | wx.EXPAND, -1)
+                
+		box.Add(self.m_aql_ctrl, proportion=1, flag=wx.ALL | wx.EXPAND, border=10)
+		box.Add(buttonPanel, proportion=0, flag=wx.ALL | wx.EXPAND, border=10)
+		box.Add(self.m_sql_ctrl, proportion=1, flag=wx.ALL | wx.EXPAND, border=10)
 		
 		panel.SetSizer(box)
 		panel.Layout()
@@ -78,6 +83,6 @@ class Frame(wx.Frame):
 		
 if __name__ == '__main__':
 	app = wx.App(redirect=True)   # Error messages go to popup window
-	top = Frame("AlgoQuest")
+	top = AQFrame(None, "AlgoQuest")
 	top.Show()
 	app.MainLoop()
