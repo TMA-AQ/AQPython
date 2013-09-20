@@ -74,12 +74,15 @@ def generate_base_desc(con, db_name, base_desc_filename):
 	
 		cur.execute('select * from ' + table_name + ' limit 1')
 		desc = cur.description
+
+                cur.execute('select count(*) from ' + table_name)
+                row = cur.fetchone()
 		
 		fdesc.write('"' + table_name + '"')
 		fdesc.write(' ')
 		fdesc.write(str(table_id))
 		fdesc.write(' ')
-		fdesc.write(str(cur.rowcount))
+		fdesc.write(str(row[0]))
 		fdesc.write(' ')
 		fdesc.write(str(len(desc)))
 		fdesc.write('\n')
@@ -138,7 +141,7 @@ def clean_aq_database(db_path, db_name):
 	
 #
 #
-def	import_aq_database(opts, force=False):
+def import_aq_database(opts, force=False):
 
 	con = mdb.connect(opts.db_host, opts.db_user, opts.db_pass, opts.db_name)
 	
@@ -148,7 +151,7 @@ def	import_aq_database(opts, force=False):
 	generate_base_desc(con, opts.aq_db_name, opts.aq_db_path + '/' + opts.aq_db_name + '/base_struct/base')
 	export_data(con, opts.aq_db_path + '/' + opts.aq_db_name + '/data_orga/tables/')
 	
-	loader.load_data(db_ini_filename)
+	loader.load_data('aq-tools', db_ini_filename) # FIXME
 
 #
 #

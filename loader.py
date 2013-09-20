@@ -36,8 +36,8 @@ def __generate_loader_ini__(db_path):
 		
 #
 # call external Loader
-def load_data(db_ini_filename):
-	os.system('AQTools --aq-ini ' + db_ini_filename + ' --load-db' )
+def load_data(loader_bin, db_ini_filename):
+	os.system(loader_bin + ' --aq-ini ' + db_ini_filename + ' --load-db' )
 	
 	# f = open(db_ini_filename)
 	# for line in f:

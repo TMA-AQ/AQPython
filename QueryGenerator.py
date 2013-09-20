@@ -1,3 +1,4 @@
+import sys
 import util
 import re
 
@@ -84,13 +85,42 @@ def parse(input):
 
 #
 #
-def generate(input):
-	gen = parse(input)
-	find = True
-	while find:
-		query = gen.next()
-		if query == "":
-			find = False
-		else:
-			yield query
+def iterate(input):
 	
+	name, ext = input.split('.')
+
+	# 
+	# 
+	if ext == 'aql':
+		f = open(input)
+		query = ''
+		for line in f:
+			if line.strip() != '':
+				query += line
+			if ';' in line:
+				yield query
+				query = ''
+
+	#
+	#
+	elif ext == 'gen':
+		gen = parse(input)
+		find = True
+		while find:
+			query = gen.next()
+			if query == "":
+				find = False
+			else:
+				yield query
+	
+	#
+	#
+	else:
+		raise Exception(input + ' is a non valid filename (only .aql and .gen are accepted)')
+	
+#
+#
+if __name__ == '__main__':
+
+	for query in iterate(sys.argv[1]):
+		print query

@@ -3,19 +3,25 @@
 import wxversion
 wxversion.select("2.8")
 import wx, wx.html
-import sys
+import sys, os, inspect
+	
+sys.path.insert(0, '/Users/sessionaq/Developpements/AQPython/gui') # FIXME
+from Settings import AQSettings
 
 import util
 
+# -----------------------------------------------------------------------------------------
+#
+#
 class AQFrame(wx.Frame):
 	def __init__(self, parent, title):
 		super(AQFrame, self).__init__(parent, title=title, size=(1024, 512))
-                self.InitUI()
-                self.Centre()
+		self.InitUI()
+		self.Centre()
 		self.Show()
 
-        def InitUI(self):
-                # self.Bind(wx.EVT_CLOSE, self.OnClose)
+	def InitUI(self):
+		# self.Bind(wx.EVT_CLOSE, self.OnClose)
 
 		# menu bar
 		menuBar = wx.MenuBar()
@@ -24,11 +30,11 @@ class AQFrame(wx.Frame):
 		menuHelp = wx.Menu()
 		# m_exit = menuFile.Append(wx.ID_EXIT, 'E&xit\tAlt-X', 'Close window and exit program.')
 		m_exit = wx.MenuItem(menuFile, wx.ID_EXIT, 'Exit', 'Close Window and exit program.')
-                menuFile.AppendItem(m_exit)
+		menuFile.AppendItem(m_exit)
 		menuBar.Append(menuFile, '&File')
 		menuBar.Append(menuEdit, '&Edit')
 		menuBar.Append(menuHelp, '&Help')
-                self.SetMenuBar(menuBar)
+		self.SetMenuBar(menuBar)
 
 		# self.Bind(wx.EVT_MENU, self.OnClose, m_exit)
 
@@ -45,8 +51,8 @@ class AQFrame(wx.Frame):
 		buttonPanelBox = wx.BoxSizer(wx.VERTICAL)
 		m_aql2sql = wx.Button(buttonPanel, wx.ID_ANY, ">>")
 		m_sql2aql = wx.Button(buttonPanel, wx.ID_ANY, "<<")
-                m_aql2sql.Bind(wx.EVT_BUTTON, self.OnAQL2SQL)
-                m_sql2aql.Bind(wx.EVT_BUTTON, self.OnSQL2AQL)
+		m_aql2sql.Bind(wx.EVT_BUTTON, self.OnAQL2SQL)
+		m_sql2aql.Bind(wx.EVT_BUTTON, self.OnSQL2AQL)
 		
 		buttonPanelBox.AddStretchSpacer(1)
 		buttonPanelBox.Add(m_aql2sql, proportion=0, flag=wx.ALL, border=10)
@@ -81,8 +87,26 @@ class AQFrame(wx.Frame):
 		query = self.m_sql_ctrl.GetValue()
 		self.m_aql_ctrl.SetValue(query)
 		
+# -----------------------------------------------------------------------------------------
+#
+#
+class SettingsFrame(wx.Frame):
+	def __init__(self, parent, title):
+		super(SettingsFrame, self).__init__(parent, title=title)
+		self.InitUI()
+		self.Centre()
+		self.Show()
+
+	def InitUI(self):
+		settings = AQSettings(self)
+		settings.Layout()
+		settings.SetClientSize(settings.GetSize())
+
+# -----------------------------------------------------------------------------------------
+#
+#
 if __name__ == '__main__':
-	app = wx.App(redirect=True)   # Error messages go to popup window
-	top = AQFrame(None, "AlgoQuest")
+	app = wx.App(redirect=False)
+	top = SettingsFrame(None, "AlgoQuest Testing Framework Settings")
 	top.Show()
 	app.MainLoop()

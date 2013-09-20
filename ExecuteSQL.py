@@ -14,12 +14,13 @@ class ExecuteSQL:
 			self.con = mdb.connect(self.host, self.user, self.password, self.db_name)
 			self.cur = self.con.cursor()
 		except mdb.Error, e:
+			self.con = None
 			print "Error: %d: %s" % (e.args[0], e.args[1])
 	
 	#
 	#
 	def __del__(self):
-		if self.con:
+		if not self.con is None:
 			self.con.close()
 		
 	#

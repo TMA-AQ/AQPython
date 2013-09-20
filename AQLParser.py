@@ -93,13 +93,15 @@ class Statements:
 		conds = [ c.strip(' \n') for c in whereStmt.split(' ')[n-1:] ]
 		i = 0
 		for k in range(n):
-			if (	conds[i].upper() == 'K_JEQ' or 
-						conds[i].upper() == 'K_JINF' or
-						conds[i].upper() == 'K_JIEQ' or
-						conds[i].upper() == 'K_JSUP' or
-						conds[i].upper() == 'K_JSEQ'	):
+			if (conds[i].upper() == 'K_JEQ' or 
+					conds[i].upper() == 'K_JINF' or
+					conds[i].upper() == 'K_JIEQ' or
+					conds[i].upper() == 'K_JSUP' or
+					conds[i].upper() == 'K_JSEQ' ):
 				self.joinStmt.append(conds[i:i+9])
 				i += 9
+			elif conds[i].upper() ==	'K_JNO':
+				i += 4
 			elif conds[i].upper() == 'IN':
 				try:
 					j = i + conds[i+1:].index('IN') + 1

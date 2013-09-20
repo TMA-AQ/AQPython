@@ -26,7 +26,13 @@ def row_comparator(rows1, rows2):
 		
 			match = True
 			for i in range(len(r1)):
-				if str(r1[i]) != str(r2[i]):
+                                vr1 = str(r1[i])
+                                vr2 = str(r2[i])
+                                if vr1 == 'None':
+                                        vr1 = 'NULL'
+                                if vr2 == 'None':
+                                        vr2 = 'NULL'
+				if vr1 != vr2:
 					match = False
 			
 			if match:
