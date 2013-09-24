@@ -4,11 +4,13 @@ import wxversion
 wxversion.select("2.8")
 import wx, wx.html
 import sys, os, inspect
+import ConfigParser
 	
-sys.path.insert(0, '/Users/sessionaq/Developpements/AQPython/gui') # FIXME
+sys.path.insert(0, './gui') # FIXME
 from Settings import AQSettings
 
 import util
+import aq_test
 
 # -----------------------------------------------------------------------------------------
 #
@@ -91,22 +93,42 @@ class AQFrame(wx.Frame):
 #
 #
 class SettingsFrame(wx.Frame):
-	def __init__(self, parent, title):
+	def __init__(self, parent, title, settings):
 		super(SettingsFrame, self).__init__(parent, title=title)
+		self.settings = settings
 		self.InitUI()
 		self.Centre()
 		self.Show()
 
 	def InitUI(self):
-		settings = AQSettings(self)
+		settings = AQSettings(self, self.settings)
 		settings.Layout()
 		settings.SetClientSize(settings.GetSize())
+		self.SetSize((600, 600))
 
 # -----------------------------------------------------------------------------------------
 #
 #
 if __name__ == '__main__':
+
+	cfg_filename = 'aq_test.cfg'
+	cfg = ConfigParser.SafeConfigParser()
+	for i in range(1, len(sys.argv)):
+		if sys.argv[i] == '--cfg':
+			cfg_filename = sys.argv[i+1]
+			break
+
+	cfg.read(cfg_filename)
+	for section in cfg.sections():
+		print cfg.items(section)
+	# sys.exit(0)
+	
+	# opts, args = aq_test.parse_option(cfg)
+	# print opts
+	# sys.exit(0)
+
 	app = wx.App(redirect=False)
-	top = SettingsFrame(None, "AlgoQuest Testing Framework Settings")
+	top = SettingsFrame(None, "AlgoQuest Testing Framework Settings", cfg)
+	top.Move((2500, 200))	
 	top.Show()
 	app.MainLoop()
