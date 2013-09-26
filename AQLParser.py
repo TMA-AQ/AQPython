@@ -179,10 +179,9 @@ class Statements:
 		sql_query += 'FROM '
 		
 		for i in range(len(self.joinStmt)):
-			if i > 0:
-				sql_query += ' and '
 			sql_query += separator + '  '
-			sql_query += self.joinStmt[i][7]
+			if i == 0:
+				sql_query += self.joinStmt[i][7]
 			sql_query += ' ' + __join_to_str__(self.joinStmt[i][5], self.joinStmt[i][1]) + ' '
 			sql_query += self.joinStmt[i][3]
 			sql_query += ' on ('

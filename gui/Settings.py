@@ -44,22 +44,17 @@ class AQSettings(wx.Panel):
 		box_aq_opts = wx.StaticBox(self, label='AlgoQuest Options')
 		box_sizer = wx.StaticBoxSizer(box_aq_opts)
 
-		gbs_aq_opts = wx.GridBagSizer(4, 2)
-
-		aq_db_name_st = wx.StaticText(self, wx.ID_ANY, 'Name')
-		aq_db_path_st = wx.StaticText(self, wx.ID_ANY, 'Path')
-		aq_engine_st  = wx.StaticText(self, wx.ID_ANY, 'Engine')
-		aq_loader_st  = wx.StaticText(self, wx.ID_ANY, 'Loader')
-
 		self.aq_db_name_tc = wx.TextCtrl(self, wx.ID_ANY)
 		self.aq_db_path_tc = wx.TextCtrl(self, wx.ID_ANY)
 		self.aq_engine_tc  = wx.TextCtrl(self, wx.ID_ANY)
 		self.aq_loader_tc  = wx.TextCtrl(self, wx.ID_ANY)
 
-		gbs_aq_opts.Add(aq_db_name_st, (0, 0))
-		gbs_aq_opts.Add(aq_db_path_st, (1, 0))
-		gbs_aq_opts.Add(aq_engine_st,  (2, 0))
-		gbs_aq_opts.Add(aq_loader_st,  (3, 0))
+		gbs_aq_opts = wx.GridBagSizer(4, 2)
+
+		gbs_aq_opts.Add(wx.StaticText(self, wx.ID_ANY, 'Name'),   (0, 0))
+		gbs_aq_opts.Add(wx.StaticText(self, wx.ID_ANY, 'Path'),   (1, 0))
+		gbs_aq_opts.Add(wx.StaticText(self, wx.ID_ANY, 'Engine'), (2, 0))
+		gbs_aq_opts.Add(wx.StaticText(self, wx.ID_ANY, 'Loader'), (3, 0))
 
 		gbs_aq_opts.Add(self.aq_db_name_tc, (0, 1), flag=wx.EXPAND)
 		gbs_aq_opts.Add(self.aq_db_path_tc, (1, 1), flag=wx.EXPAND)
@@ -77,23 +72,18 @@ class AQSettings(wx.Panel):
 
 		box_db_opts = wx.StaticBox(self, label='Database Source Options')
 		box_sizer = wx.StaticBoxSizer(box_db_opts)
-
-		gbs_db_src_opts = wx.GridBagSizer(4, 2)
-		
-		src_db_host_st = wx.StaticText(self, wx.ID_ANY, 'Host')
-		src_db_user_st = wx.StaticText(self, wx.ID_ANY, 'User')
-		src_db_pass_st = wx.StaticText(self, wx.ID_ANY, 'Pass')
-		src_db_name_st = wx.StaticText(self, wx.ID_ANY, 'Name')
 		
 		self.src_db_host_tc = wx.TextCtrl(self, wx.ID_ANY)
 		self.src_db_user_tc = wx.TextCtrl(self, wx.ID_ANY)
 		self.src_db_pass_tc = wx.TextCtrl(self, wx.ID_ANY)
 		self.src_db_name_tc = wx.TextCtrl(self, wx.ID_ANY)
 		
-		gbs_db_src_opts.Add(src_db_host_st, (0, 0))
-		gbs_db_src_opts.Add(src_db_user_st, (1, 0))
-		gbs_db_src_opts.Add(src_db_pass_st, (2, 0))
-		gbs_db_src_opts.Add(src_db_name_st, (3, 0))
+		gbs_db_src_opts = wx.GridBagSizer(4, 2)
+
+		gbs_db_src_opts.Add(wx.StaticText(self, wx.ID_ANY, 'Host'), (0, 0))
+		gbs_db_src_opts.Add(wx.StaticText(self, wx.ID_ANY, 'User'), (1, 0))
+		gbs_db_src_opts.Add(wx.StaticText(self, wx.ID_ANY, 'Pass'), (2, 0))
+		gbs_db_src_opts.Add(wx.StaticText(self, wx.ID_ANY, 'Name'), (3, 0))
 		
 		gbs_db_src_opts.Add(self.src_db_host_tc, (0, 1), flag=wx.EXPAND)
 		gbs_db_src_opts.Add(self.src_db_user_tc, (1, 1), flag=wx.EXPAND)
@@ -110,12 +100,13 @@ class AQSettings(wx.Panel):
 		# Database Generation Options
 
 		box_dbg_opts = wx.StaticBox(self, label='Database Generation Options')
-		box_sizer = wx.StaticBoxSizer(box_dbg_opts, wx.VERTICAL)
+		box_sizer = wx.StaticBoxSizer(box_dbg_opts)
 		
-		self.gen_cb = wx.CheckBox(self, wx.ID_ANY, label='generate database')
-		self.min_value_ctrl = wx.SpinCtrl(self, wx.ID_ANY, '', (30, 50))
-		self.max_value_ctrl = wx.SpinCtrl(self, wx.ID_ANY, '', (30, 50))
-		self.nb_row_ctrl    = wx.SpinCtrl(self, wx.ID_ANY, '', (30, 50))
+		self.gen_cb         = wx.CheckBox(self, wx.ID_ANY)
+		self.all_value_cb   = wx.CheckBox(self, wx.ID_ANY)
+		self.min_value_ctrl = wx.SpinCtrl(self, wx.ID_ANY, '')
+		self.max_value_ctrl = wx.SpinCtrl(self, wx.ID_ANY, '')
+		self.nb_row_ctrl    = wx.SpinCtrl(self, wx.ID_ANY, '')
 		
 		self.min_value_ctrl.SetRange(1, 50)
 		self.max_value_ctrl.SetRange(1, 50)
@@ -123,11 +114,24 @@ class AQSettings(wx.Panel):
 		self.min_value_ctrl.SetValue(1)
 		self.max_value_ctrl.SetValue(50)
 		self.nb_row_ctrl.SetValue(10)
-	
-		box_sizer.Add(self.gen_cb, proportion=0, flag=wx.wx.ALL, border=0)
-		box_sizer.Add(self.min_value_ctrl, proportion=0, flag=wx.wx.ALL|wx.EXPAND, border=0)
-		box_sizer.Add(self.max_value_ctrl, proportion=0, flag=wx.wx.ALL|wx.EXPAND, border=0)
-		box_sizer.Add(self.nb_row_ctrl, proportion=0, flag=wx.wx.ALL|wx.EXPAND, border=0)
+
+		gbs_db_gen_opts = wx.GridBagSizer(5, 2)
+
+		gbs_db_gen_opts.Add(wx.StaticText(self, wx.ID_ANY, 'database generation'), (0, 0))
+		gbs_db_gen_opts.Add(wx.StaticText(self, wx.ID_ANY, 'all values')         , (1, 0))
+		gbs_db_gen_opts.Add(wx.StaticText(self, wx.ID_ANY, 'min values')         , (2, 0))
+		gbs_db_gen_opts.Add(wx.StaticText(self, wx.ID_ANY, 'max values')         , (3, 0))
+		gbs_db_gen_opts.Add(wx.StaticText(self, wx.ID_ANY, 'nb rows')            , (4, 0))
+
+		gbs_db_gen_opts.Add(self.gen_cb,         (0, 1), flag=wx.ALIGN_RIGHT)
+		gbs_db_gen_opts.Add(self.all_value_cb,   (1, 1), flag=wx.ALIGN_RIGHT)
+		gbs_db_gen_opts.Add(self.min_value_ctrl, (2, 1), flag=wx.EXPAND)
+		gbs_db_gen_opts.Add(self.max_value_ctrl, (3, 1), flag=wx.EXPAND)
+		gbs_db_gen_opts.Add(self.nb_row_ctrl,    (4, 1), flag=wx.EXPAND)
+
+		gbs_db_gen_opts.AddGrowableCol(1)
+
+		box_sizer.Add(gbs_db_gen_opts, proportion=1, border=10)
 
 		box.Add(box_sizer, proportion=0, flag=wx.ALL|wx.EXPAND, border=10)
 
@@ -150,7 +154,7 @@ class AQSettings(wx.Panel):
 		self.Bind(wx.EVT_BUTTON, self.__OnValid__, buttonOK)
 
 		bPanel.SetSizer(bbox)
-		box.Add(bPanel, proportion=0, flag=wx.ALL|wx.ALIGN_RIGHT|wx.ALIGN_BOTTOM, border=0)
+		box.Add(bPanel, proportion=0, flag=wx.ALL|wx.ALIGN_RIGHT|wx.ALIGN_BOTTOM, border=5)
 		
 		self.SetSizer(box)
 		self.Layout()

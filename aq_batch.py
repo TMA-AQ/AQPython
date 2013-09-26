@@ -22,7 +22,7 @@ else:
 	print "clean " + tmp_working_dir
 	
 f = open(ini_filename, 'w')
-f.write('export.filename.final=' + db_path + db_name + '/base_struct/base.\n')
+f.write('export.filename.final=' + db_path + db_name + '/base_struct/base.aqb\n')
 f.write('step1.field.separator=;\n')
 f.write('k_rep_racine=' + db_path + db_name + '/\n')
 f.write('k_rep_racine_tmp=' + db_path + db_name + '/\n')

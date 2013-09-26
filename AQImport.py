@@ -2,6 +2,7 @@
 
 import os
 import sys
+import shutil
 import MySQLdb as mdb
 import collections
 from optparse import OptionParser, OptionGroup
@@ -75,8 +76,8 @@ def generate_base_desc(con, db_name, base_desc_filename):
 		cur.execute('select * from ' + table_name + ' limit 1')
 		desc = cur.description
 
-                cur.execute('select count(*) from ' + table_name)
-                row = cur.fetchone()
+		cur.execute('select count(*) from ' + table_name)
+		row = cur.fetchone()
 		
 		fdesc.write('"' + table_name + '"')
 		fdesc.write(' ')
@@ -132,26 +133,44 @@ def clean_aq_database(db_path, db_name):
 		os.remove(bd_file)	
 	
 	dir = db_path + '/' + db_name + '/data_orga/'
-	for f in [ file for file in os.listdir(dir) if os.path.isfile(os.path.join(dir, file)) ]:
-		os.remove(os.path.join(dir, f))
+	if os.path.exists(dir):
+		for f in [ file for file in os.listdir(dir) if os.path.isfile(os.path.join(dir, file)) ]:
+			os.remove(os.path.join(dir, f))
 	
 	dir = db_path + '/' + db_name + '/data_orga/vdg/data/'
-	for f in [ file for file in os.listdir(dir) if os.path.isfile(os.path.join(dir, file)) ]:
-		os.remove(os.path.join(dir, f))
+	if os.path.exists(dir):
+		for f in [ file for file in os.listdir(dir) if os.path.isfile(os.path.join(dir, file)) ]:
+			os.remove(os.path.join(dir, f))
+
+	dir = db_path + '/' + db_name + '/calculus/'
+	if os.path.exists(dir):
+		for d in [ d for d in os.listdir(dir) if os.path.isdir(os.path.join(dir, d)) ]:
+			shutil.rmtree(os.path.join(dir, d))
+
+	dir = db_path + '/' + db_name + '/data_orga/tmp/'
+	if os.path.exists(dir):
+		for d in [ d for d in os.listdir(dir) if os.path.isdir(os.path.join(dir, d)) ]:
+			shutil.rmtree(os.path.join(dir, d))
 	
 #
 #
 def import_aq_database(opts, force=False):
 
-	con = mdb.connect(opts.db_host, opts.db_user, opts.db_pass, opts.db_name)
+	try:
+		con = mdb.connect(opts.db_host, opts.db_user, opts.db_pass, opts.db_name)
 	
-	create_db_directories(opts.aq_db_path, opts.aq_db_name, force)
-	db_ini_filename = generate_ini(opts.aq_db_path, opts.aq_db_name, opts.aq_engine, opts.aq_loader)
+		create_db_directories(opts.aq_db_path, opts.aq_db_name, force)
+		db_ini_filename = generate_ini(opts.aq_db_path, opts.aq_db_name, opts.aq_engine, opts.aq_loader)
 
-	generate_base_desc(con, opts.aq_db_name, opts.aq_db_path + '/' + opts.aq_db_name + '/base_struct/base')
-	export_data(con, opts.aq_db_path + '/' + opts.aq_db_name + '/data_orga/tables/')
+		generate_base_desc(con, opts.aq_db_name, opts.aq_db_path + '/' + opts.aq_db_name + '/base_struct/base.aqb')
+		export_data(con, opts.aq_db_path + '/' + opts.aq_db_name + '/data_orga/tables/')
 	
-	loader.load_data('aq-tools', db_ini_filename) # FIXME
+		loader.load_data('aq-tools', db_ini_filename) # FIXME
+	except Exception, e:
+		print "IMPORT ERROR: %s" % e.message
+	finally:
+		if con:
+			con.close()
 
 #
 #
@@ -177,13 +196,13 @@ if __name__ == '__main__':
 												action="store", 
 												type="string", 
 												dest="aq_engine", 
-												default="AQ_Engine", 
+												default="aq-engine", 
 												help='aq engine executable [default: %default]')
 	aq_options.add_option('', '--aq-loader', 
 												action="store", 
 												type="string", 
 												dest="aq_loader", 
-												default="AQ_Loader", 
+												default="aq-loader", 
 												help='loader executable [default: %default]')				
 										
 	#
@@ -230,6 +249,3 @@ if __name__ == '__main__':
 		print "Error: %s" % (e.message)
 	except mdb.Error, e:
 		print "Error: %d: %s" % (e.args[0], e.args[1])
-	finally:
-		if con:
-			con.close()

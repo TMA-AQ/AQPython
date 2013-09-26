@@ -10,6 +10,7 @@ import AQLParser
 import util
 import QueryGenerator
 import DataBaseGenerator
+import LogAnalyzer
 import AQImport
 
 # -------------------------------------------------------------------------------
@@ -70,42 +71,50 @@ def parse_option(cfg):
 	section = 'Database Generation Options'
 	db_gen_options = OptionGroup(parser, section)
 	db_gen_options.add_option('', '--generate-db', action="store_true", dest="generate_db", default=cfg.getboolean(section, 'generate-db'), help="generate database [default: %default]")
+	db_gen_options.add_option('', '--nb-tables', action="store", type="int", dest="nb_tables", default=cfg.get(section, 'nb-tables'), help="nb tables to generate [default: %default]")
 	db_gen_options.add_option('', '--nb-rows', action="store", type="int", dest="nb_rows", default=cfg.get(section, 'nb-rows'), help="nb rows generate for each tables [default: %default]")
 	db_gen_options.add_option('', '--min-value', action="store", type="int", dest="min_value", default=cfg.get(section, 'min-value'), help="minimal value generate in table t1 [default: %default]")
 	db_gen_options.add_option('', '--max-value', action="store", type="int", dest="max_value", default=cfg.get(section, 'max-value'), help="maximal value generate in table t2 [default: %default]")
+	db_gen_options.add_option('', '--all-values', action="store_true", dest="all_values", default=cfg.getboolean(section, 'all-values'), help="put all possible values in the generated database [default: %default]")
 
 	#
-	# misceallenous option
-	parser.add_option('-v', '--verbose', action="store_true", dest="verbose", default=False, help="set verbosity")
-	parser.add_option('', '--cfg', action="store", type="string", dest="cfg_file", default="", help="config filename, do not take care of other option if specified [default: %default]")
+	# miscellaneous option
+	section = 'Miscellaneous Options'
+	misc_options = OptionGroup(parser, section)
+	misc_options.add_option('-v', '--verbose', action="store_true", dest="verbose", default=False, help="set verbosity")
+	misc_options.add_option('-l', '--log-file', action="store", type="string", dest="log_file", help="activate log and log in LOG_FILE")
+	misc_options.add_option('', '--xml-log-file', action="store", type="string", dest="xml_log_file", default=cfg.get(section, 'xml-log-file'), help="activate xml log and log in LOG_FILE [%default]")
+	misc_options.add_option('', '--cfg', action="store", type="string", dest="cfg_file", default="", help="config filename, do not take care of other option if specified [default: aq_test.cfg]")
 
 	parser.add_option_group(aq_options)
 	parser.add_option_group(source_db_options)
 	parser.add_option_group(check_options)
 	parser.add_option_group(db_gen_options)
+	parser.add_option_group(misc_options)
 	
 	return parser.parse_args()
 
 # -------------------------------------------------------------------------------
 def check_database(queries_file, exec_sql, exec_aql, stop_on_failure=False, verbose=False):
 
+	queries_log = ''
+
 	if queries_file is None:
 		raise Exception('you need to provide a generator queries file')
 
 	nb_checked, nb_error = 0, 0
 	for aql_query in QueryGenerator.iterate(queries_file):
-
-		if verbose:
-			print ''
-			print '==='
-			print ''		
-			print aql_query
 		
 		ss = AQLParser.Statements()
 		ss.parse(aql_query)
 		sql_query = ss.to_sql(separator = '\n')
 			
 		if verbose:
+			print ''
+			print '==='
+			print ''		
+			print aql_query
+			print ''		
 			print sql_query
 					
 		##################################################
@@ -121,15 +130,32 @@ def check_database(queries_file, exec_sql, exec_aql, stop_on_failure=False, verb
 		sql_rows = exec_sql.execute_and_fetch(sql_query)
 		aql_rows = exec_aql.execute(aql_query)
 			
-		if not util.row_comparator(sql_rows, aql_rows):
-			print_query(sys.stderr, 'ERROR: query failed', aql_query, sql_query, aql_rows, sql_rows)
+		if (not util.row_in(sql_rows, aql_rows)) or (not util.row_in(aql_rows, sql_rows)):
 			nb_error += 1
+			if verbose:
+				print_query(sys.stderr, 'ERROR: query failed', aql_query, sql_query, aql_rows, sql_rows)
+			queries_log += '<Query status="error">\n'
+			queries_log += aql_query
+			queries_log += '<Results nb="' + str(len(aql_rows)) + '">\n'
+			queries_log += str(aql_rows)
+			queries_log += '\n'
+			queries_log += '</Results>\n'
+			queries_log += '<Expected nb="' + str(len(sql_rows)) + '">\n'
+			queries_log += str(sql_rows)
+			queries_log += '\n'
+			queries_log += '</Expected>\n'
+			queries_log += '</Query>\n'
+
 			if stop_on_failure:
 				return (nb_checked, nb_error)
-		elif verbose:
-			print_query(sys.stdout, 'query successfully checked', aql_query, sql_query, aql_rows, sql_rows)
+		else:
+			if verbose:
+				print_query(sys.stdout, 'query successfully checked', aql_query, sql_query, aql_rows, sql_rows)
+			#	queries_log += '<query status="successful">\n'
+			#	queries_log += aql_query
+			#	queries_log += '</query>\n'
 
-	return (nb_checked, nb_error)
+	return (nb_checked, nb_error, queries_log)
 			
 # -------------------------------------------------------------------------------
 def print_query_generator(queries_file):
@@ -140,6 +166,37 @@ def print_query_generator(queries_file):
 		print '\'', gen.base, '\''
 		print gen.idents
 		print ''
+
+# -------------------------------------------------------------------------------
+def log_error(xml_log_file_desc, test_id, tables, rows, queries_log, nb_checked, nb_errors):
+	if xml_log_file_desc is not None:
+		xml_log_file_desc.write('<Test id="' + str(test_id) + '">\n')
+		xml_log_file_desc.write('<Database>\n')
+		xml_log_file_desc.write('<Tables>\n')
+		
+		for i in range(len(tables)):
+			xml_log_file_desc.write('<Table name="' + tables[i] + '">\n')
+			xml_log_file_desc.write('<Columns>\n')
+			xml_log_file_desc.write('<Column name="' + 'id' + '">\n')
+			values = [ id for id in range(1, len(rows[i]) + 1) ]
+			xml_log_file_desc.write(str(values))
+			xml_log_file_desc.write('\n')
+			xml_log_file_desc.write('</Column>\n')
+			xml_log_file_desc.write('<Column name="' + 'val_1' + '">\n')
+			values = [ val for val in rows[i] ]
+			xml_log_file_desc.write(str(values))
+			xml_log_file_desc.write('\n')
+			xml_log_file_desc.write('</Column>\n')
+			xml_log_file_desc.write('</Columns>\n')
+			xml_log_file_desc.write('</Table>\n')
+
+		xml_log_file_desc.write('</Tables>\n')
+		xml_log_file_desc.write('</Database>\n')
+		xml_log_file_desc.write('<Queries success="' + str(nb_checked - nb_errors) + '" errors="' + str(nb_errors) + '">\n')
+		xml_log_file_desc.write(queries_log)
+		xml_log_file_desc.write('</Queries>')
+		xml_log_file_desc.write('</Test>')
+	
 
 # -------------------------------------------------------------------------------
 if __name__ == '__main__':
@@ -172,28 +229,65 @@ if __name__ == '__main__':
 			raise Exception('You need to provide a queries file (.aql or .gen) (--queries-file)')
 	
 		exec_sql = ExecuteSQL(opts.db_host, opts.db_user, opts.db_pass, opts.db_name)
-		exec_aql = ExecuteAQL('aq-engine-tests', opts.aq_db_path, opts.aq_db_name) # FIXME
+		exec_aql = ExecuteAQL('aq-engine-tests', opts.aq_db_path, opts.aq_db_name, opts.aq_engine) # FIXME
+
+		#
+		# Open Logging
+		if opts.xml_log_file is not None:
+			if opts.verbose:
+				print 'open', opts.xml_log_file
+			xml_log_file_desc = open(opts.xml_log_file, 'w')
 		
-		for (tables, rows) in DataBaseGenerator.generate(opts.nb_rows, opts.min_value, opts.max_value):
-			
-			if opts.generate_db:
-				print "Generate database", opts.db_name, "on", opts.db_host
-				DataBaseGenerator.load(exec_sql, tables, rows)
-		
+		#
+		# Logging
+		if xml_log_file_desc is not None:
+			xml_log_file_desc.write('<Tests>\n')
+
+		#
+		# Database Generator
+		db_gen = DataBaseGenerator.DBGen(opts.nb_tables, opts.nb_rows, opts.min_value, opts.max_value, opts.all_values, exec_sql)
+		# db_gen = LogAnalyzer.DBGen(exec_sql, './aq_test_log_2_tables_errors.xml') # FIXME
+
+		#
+		# for each database generated
+		test_id = 0
+		for (tables, rows) in db_gen.iterate():
+	
+			test_id += 1
+
+			print 'test', test_id
+
+			if opts.verbose:
+				print ''
+				print '==='
+				print ''
+
+			#
+			# Clean and Import
 			if opts.import_db:
-				print "Clean AQ Database", opts.aq_db_path + '/' + opts.aq_db_name
+				if opts.verbose:
+					print "Clean AQ Database", opts.aq_db_path + '/' + opts.aq_db_name
 				AQImport.clean_aq_database(opts.aq_db_path, opts.aq_db_name)
 			
-				print "Import", opts.db_name, "into", opts.aq_db_path + '/' + opts.aq_db_name
+				if opts.verbose:
+					print "Import", opts.db_name, "into", opts.aq_db_path + '/' + opts.aq_db_name
 				AQImport.import_aq_database(opts, force=True)
 
+			#
+			# Check Queries on Database (compare with the source)
 			if opts.check_db:
-				print "Check", opts.aq_db_name, "database"
-				(c, e) = check_database(opts.queries_file, exec_sql, exec_aql, opts.stop_on_failure, opts.verbose)
+
+				if opts.verbose:
+					print "Check", opts.aq_db_name, "database"
+
+				(c, e, queries_log) = check_database(opts.queries_file, exec_sql, exec_aql, opts.stop_on_failure, opts.verbose)
 				nb_checked += c
 				nb_error += e
 
 				if e > 0:
+					log_error(xml_log_file_desc, test_id, tables, rows, queries_log, c, e)
+
+				if (e > 0) and opts.verbose:
 					print 'Database Contents:'
 					print ''
 					DataBaseGenerator.print_base(tables, rows)
@@ -202,12 +296,16 @@ if __name__ == '__main__':
 				if opts.stop_on_failure:
 					print 'STOP ON FAILURE'
 					break
-	
+
+		#
+		# close Logging
+		if xml_log_file_desc is not None:
+			xml_log_file_desc.write('</Tests>\n')
+			xml_log_file_desc.close()
+
 	except AQImport.ImportError, e:
-		print >> sys.stderr, "Error: %s" % (e.message)
-	except Exception, e:
 		print >> sys.stderr, "Error: %s" % (e.message)
 		
 	print ''		
-	print nb_checked, 'queries checked.', nb_checked - nb_error, 'success', nb_error, 'errors'
+	print nb_checked, 'queries checked { success :', nb_checked - nb_error, ' ; error :', nb_error, ' }'
 	print ''

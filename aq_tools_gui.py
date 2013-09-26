@@ -129,6 +129,6 @@ if __name__ == '__main__':
 
 	app = wx.App(redirect=False)
 	top = SettingsFrame(None, "AlgoQuest Testing Framework Settings", cfg)
-	top.Move((2500, 200))	
+	# top.Move((2500, 200))	
 	top.Show()
 	app.MainLoop()

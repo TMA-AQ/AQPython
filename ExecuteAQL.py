@@ -4,10 +4,11 @@ class ExecuteAQL:
 
 	#
 	#
-	def __init__(self, aq_engine_tests, db_path, db_name):
-                self.aq_engine_tests = aq_engine_tests
+	def __init__(self, aq_engine_tests, db_path, db_name, aq_engine):
+		self.aq_engine_tests = aq_engine_tests
 		self.db_path = db_path
 		self.db_name = db_name
+		self.aq_engine = aq_engine
 		
 	#
 	# execute aql query and get results
@@ -23,9 +24,9 @@ class ExecuteAQL:
                 cmd_str += " --root-path=" + self.db_path
                 cmd_str += " --db-name=" + self.db_name 
                 cmd_str += " --log-level=2 "
-                cmd_str += " --aq-engine=aq-engine " # FIXME
+                cmd_str += " --aq-engine=" + self.aq_engine
 		if verbose:
-			cmd_str += "--check-result -v > result.txt"
+			cmd_str += " --check-result -v > result.txt "
 		os.system(cmd_str)
 		
 		# get results as rows
@@ -40,13 +41,13 @@ class ExecuteAQL:
 			if row:
 				rows.append(row)
 		f.close()
-		
+
 		return rows
 		
 		
 	#
 	# execute aq engine
 	def run_aq_engine(self, ini_filename, ident, mode):
-		cmd_str = 'E:/AQ_Bin/AQ_Engine.exe ' + ini_filename + ' ' + ident + ' ' + mode
+		cmd_str = self.aq_engine + ' ' + ini_filename + ' ' + ident + ' ' + mode
 		os.system(cmd_str)
 		

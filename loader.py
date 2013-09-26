@@ -26,7 +26,7 @@ def __write_thesaurus_value__(the, value, type, size):
 def __generate_loader_ini__(db_path):
 	ini_filename = db_path + '/loader.ini'
 	f = open(db_path + '/loader.ini', 'w')
-	f.write('export.filename.final=' + db_path + '/base_struct/base.' + '\n')
+	f.write('export.filename.final=' + db_path + '/base_struct/base.aqb' + '\n')
 	f.write('step1.field.separator=,' + '\n')
 	f.write('k_rep_racine=' + db_path + '\n')
 	f.write('k_rep_racine_tmp=' + db_path + '\n')
@@ -37,7 +37,8 @@ def __generate_loader_ini__(db_path):
 #
 # call external Loader
 def load_data(loader_bin, db_ini_filename):
-	os.system(loader_bin + ' --aq-ini ' + db_ini_filename + ' --load-db' )
+	# print loader_bin, ' --aq-ini', db_ini_filename, ' --load-db'
+  os.system(loader_bin + ' --aq-ini ' + db_ini_filename + ' --load-db' )
 	
 	# f = open(db_ini_filename)
 	# for line in f:
