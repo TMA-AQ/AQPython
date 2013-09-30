@@ -224,7 +224,7 @@ class Statements:
 					sql_query += ', '
 				sql_query += self.orderStmt[i][0] + '.' + self.orderStmt[i][1]
 		
-		sql_query += separator
+		# sql_query += separator
 		sql_query += ';'
 		
 		return sql_query

@@ -52,36 +52,31 @@ class QueryGenerator:
 		
 #
 #
-def parse(input):
+def parse(f):
 
 	base = ""
-	if input == "stdin":
-		while True:
-			line = sys.stdin.readline()
+	ops = dict()
+	for line in f:
+		if line.find('=') != -1:
+			op_name, values_str = line.split('=');
+			op_name = op_name.strip()
+			values_str = values_str.strip(' []\n')
+			values = values_str.split(',')
+			for i in range(len(values)):
+				values[i] = values[i].strip(' \'')
+			ops[op_name] = values
+		elif line.strip() != "":
 			base += line
-			if line.find(';') != -1:
-				break
-	else:
-		f = open(input, 'r')
-		ops = dict()
-		for line in f:
-			if line.find('=') != -1:
-				op_name, values_str = line.split('=');
-				op_name = op_name.strip()
-				values_str = values_str.strip(' []\n')
-				values = values_str.split(',')
-				for i in range(len(values)):
-					values[i] = values[i].strip(' \'')
-				ops[op_name] = values
-			elif line.strip() != "":
-				base += line
 
 	idents = []
 	for op_name in ops:
 		idents += re.findall('\[' + op_name + '_[0-9]+\]', base)
 
-	gen = QueryGenerator(base, idents, ops)
-	return gen
+	if ';' in base:
+		gen = QueryGenerator(base, idents, ops)
+		return gen
+	else:
+		return None
 
 #
 #
@@ -104,14 +99,18 @@ def iterate(input):
 	#
 	#
 	elif ext == 'gen':
-		gen = parse(input)
-		find = True
-		while find:
-			query = gen.next()
-			if query == "":
-				find = False
-			else:
-				yield query
+		f = open(input, 'r')
+		while True:
+			gen = parse(f)
+			if gen is None:
+				break
+			find = True
+			while find:
+				query = gen.next()
+				if query == "":
+					find = False
+				else:
+					yield query
 	
 	#
 	#

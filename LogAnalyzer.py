@@ -17,7 +17,8 @@ def getList(valueslist):
 # ------------------------------------------------------------------------------
 def print_db_errors(test):
 
-	print 'Test', test.attributes["id"].value
+	print 'Test', test.attributes["id"].value, ':'
+	print ''
 
 	#
 	for db in test.getElementsByTagName("Database"):
@@ -47,13 +48,24 @@ def print_db_errors(test):
 			print qc
 			print qi
 
+	print ''
+	
 	#
 	for query in test.getElementsByTagName("Query"):
-		print getText(query.childNodes)
+		print '---'
+		print ''
+		for aql_query in query.getElementsByTagName("AQL"):
+			print getText(aql_query.childNodes)
+		print ''
+		for sql_query in query.getElementsByTagName("SQL"):
+			print getText(sql_query.childNodes)
+		print ''
 		for result in query.getElementsByTagName("Results"):
 			print 'results :', getText(result.childNodes)
+		print ''
 		for expected in query.getElementsByTagName("Expected"):
 			print 'expected :', getText(expected.childNodes)
+		print ''
 
 # ------------------------------------------------------------------------------
 class DBGen:
@@ -126,7 +138,7 @@ if __name__ == '__main__':
 			print_db_errors(test)
 			break
 		else:
-			print '---'
+			print '===================================='
 			print ''
 			print_db_errors(test)
 			print ''

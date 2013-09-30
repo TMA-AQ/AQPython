@@ -157,15 +157,18 @@ def clean_aq_database(db_path, db_name):
 def import_aq_database(opts, force=False):
 
 	try:
+		# print 'connect to ', opts.db_host, opts.db_user, opts.db_pass, opts.db_name
 		con = mdb.connect(opts.db_host, opts.db_user, opts.db_pass, opts.db_name)
-	
+		
 		create_db_directories(opts.aq_db_path, opts.aq_db_name, force)
 		db_ini_filename = generate_ini(opts.aq_db_path, opts.aq_db_name, opts.aq_engine, opts.aq_loader)
 
 		generate_base_desc(con, opts.aq_db_name, opts.aq_db_path + '/' + opts.aq_db_name + '/base_struct/base.aqb')
 		export_data(con, opts.aq_db_path + '/' + opts.aq_db_name + '/data_orga/tables/')
 	
-		loader.load_data('aq-tools', db_ini_filename) # FIXME
+		# loader.load_data('aq-tools', db_ini_filename) # FIXME
+		loader.load_data('AQTools', db_ini_filename) # FIXME
+		
 	except Exception, e:
 		print "IMPORT ERROR: %s" % e.message
 	finally:

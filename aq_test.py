@@ -10,7 +10,7 @@ import AQLParser
 import util
 import QueryGenerator
 import DataBaseGenerator
-import LogAnalyzer
+# import LogAnalyzer
 import AQImport
 
 # -------------------------------------------------------------------------------
@@ -128,14 +128,23 @@ def check_database(queries_file, exec_sql, exec_aql, stop_on_failure=False, verb
 		nb_checked += 1
 
 		sql_rows = exec_sql.execute_and_fetch(sql_query)
-		aql_rows = exec_aql.execute(aql_query)
+		rc, aql_rows = exec_aql.execute(aql_query)
 			
-		if (not util.row_in(sql_rows, aql_rows)) or (not util.row_in(aql_rows, sql_rows)):
+		if (rc != 0) or (not util.row_in(sql_rows, aql_rows)) or (not util.row_in(aql_rows, sql_rows)):
 			nb_error += 1
 			if verbose:
 				print_query(sys.stderr, 'ERROR: query failed', aql_query, sql_query, aql_rows, sql_rows)
-			queries_log += '<Query status="error">\n'
-			queries_log += aql_query
+			elif rc == 0:
+				sys.stdout.write('d')
+			elif rc != 0:
+				sys.stdout.write('e')
+			queries_log += '<Query id="' + str(nb_checked) + '" status="error" type="' + ('data' if rc == 0 else 'aq_engine') + '">\n'
+			queries_log += '<AQL>\n'
+			queries_log += aql_query + '\n'
+			queries_log += '</AQL>\n'
+			queries_log += '<SQL>\n'
+			queries_log += sql_query + '\n'
+			queries_log += '</SQL>\n'
 			queries_log += '<Results nb="' + str(len(aql_rows)) + '">\n'
 			queries_log += str(aql_rows)
 			queries_log += '\n'
@@ -151,10 +160,11 @@ def check_database(queries_file, exec_sql, exec_aql, stop_on_failure=False, verb
 		else:
 			if verbose:
 				print_query(sys.stdout, 'query successfully checked', aql_query, sql_query, aql_rows, sql_rows)
+			else:
+				sys.stdout.write('.')
 			#	queries_log += '<query status="successful">\n'
 			#	queries_log += aql_query
 			#	queries_log += '</query>\n'
-
 	return (nb_checked, nb_error, queries_log)
 			
 # -------------------------------------------------------------------------------
@@ -229,7 +239,8 @@ if __name__ == '__main__':
 			raise Exception('You need to provide a queries file (.aql or .gen) (--queries-file)')
 	
 		exec_sql = ExecuteSQL(opts.db_host, opts.db_user, opts.db_pass, opts.db_name)
-		exec_aql = ExecuteAQL('aq-engine-tests', opts.aq_db_path, opts.aq_db_name, opts.aq_engine) # FIXME
+		# exec_aql = ExecuteAQL('aq-engine-tests', opts.aq_db_path, opts.aq_db_name, opts.aq_engine) # FIXME
+		exec_aql = ExecuteAQL('AQEngineTests', opts.aq_db_path, opts.aq_db_name, opts.aq_engine) # FIXME
 
 		#
 		# Open Logging
@@ -252,11 +263,10 @@ if __name__ == '__main__':
 		# for each database generated
 		test_id = 0
 		for (tables, rows) in db_gen.iterate():
-	
+		
 			test_id += 1
-
-			print 'test', test_id
-
+			print 'test', test_id, [ [tables[i], min(rows[i]), max(rows[i])] for i in range(len(tables)) ]
+			
 			if opts.verbose:
 				print ''
 				print '==='
@@ -293,10 +303,15 @@ if __name__ == '__main__':
 					DataBaseGenerator.print_base(tables, rows)
 					print ''
 		
-				if opts.stop_on_failure:
+				if (e > 0) and opts.stop_on_failure:
 					print 'STOP ON FAILURE'
 					break
 
+				print ''
+				print c, 'queries checked { success :', c - e, ' ; error :', e, ' }'
+					
+			break
+			
 		#
 		# close Logging
 		if xml_log_file_desc is not None:

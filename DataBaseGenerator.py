@@ -95,9 +95,13 @@ def generate(nb_tables, nb_rows, r_min, r_max, all_values=False):
 			rows = []
 			for t in tables_values:
 				rows.append([ v for v in t ])
-
+		else: # add min and max
+			rows = []
+			for t in tables_values:
+				rows.append([min(t), max(t)])
+				
 		for j in range(len(tables_values)):
-			for i in range(nb_rows):
+			for i in range(nb_rows - 2):
 				rows[j].append( tables_values[j][random.randint(0, len(tables_values[j]) - 1)] )
 
 		yield ([ 't' + str(id) for id in range(1, nb_tables + 1) ], rows)

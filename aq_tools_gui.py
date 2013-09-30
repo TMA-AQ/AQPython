@@ -4,10 +4,12 @@ import wxversion
 wxversion.select("2.8")
 import wx, wx.html
 import sys, os, inspect
+import xml.dom.minidom
 import ConfigParser
 	
 sys.path.insert(0, './gui') # FIXME
 from Settings import AQSettings
+from ResultReport import ResultReport
 
 import util
 import aq_test
@@ -105,6 +107,23 @@ class SettingsFrame(wx.Frame):
 		settings.Layout()
 		settings.SetClientSize(settings.GetSize())
 		self.SetSize((600, 600))
+	
+# -----------------------------------------------------------------------------------------
+#
+#
+class ResultsFrame(wx.Frame):
+	def __init__(self, parent, title, log_file):
+		super(ResultsFrame, self).__init__(parent, title=title)
+		self._log_file = xml.dom.minidom.parse(log_file)
+		self._InitUI()
+		self.Centre()
+		self.Show()
+
+	def _InitUI(self):
+		report = ResultReport(self, self._log_file)
+		report.Layout()
+		report.SetClientSize(report.GetSize())
+		self.SetSize((600, 600))
 
 # -----------------------------------------------------------------------------------------
 #
@@ -121,6 +140,7 @@ if __name__ == '__main__':
 	cfg.read(cfg_filename)
 	for section in cfg.sections():
 		print cfg.items(section)
+	
 	# sys.exit(0)
 	
 	# opts, args = aq_test.parse_option(cfg)
@@ -128,7 +148,8 @@ if __name__ == '__main__':
 	# sys.exit(0)
 
 	app = wx.App(redirect=False)
-	top = SettingsFrame(None, "AlgoQuest Testing Framework Settings", cfg)
+	# top = SettingsFrame(None, "AlgoQuest Testing Framework Settings", cfg)
+	top = ResultsFrame(None, "AlgoQuest Testing Framework Results", cfg.get('Miscellaneous Options', 'xml-log-file'))
 	# top.Move((2500, 200))	
 	top.Show()
 	app.MainLoop()
