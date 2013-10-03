@@ -160,7 +160,7 @@ class Statements:
 			end = query.upper().find(';')
 			if (beg != -1) and (end != -1):
 				self.__parse_order_stmt__(query[beg:end].strip(' '))
-		
+	
 	#
 	#
 	def to_sql(self, separator=' '):
@@ -228,3 +228,39 @@ class Statements:
 		sql_query += ';'
 		
 		return sql_query
+
+# -------------------------------------------------------------------------------
+def kjeq_parse(query):
+	cmd = 'aq-engine-tests --query="' + query.replace('\n', ' ') + '" --parse > tmp.aql'
+	print cmd
+	os.system(cmd)
+	aql_query = ''
+	f2 = open('tmp.aql', 'r')
+	keywords = [ 'FROM', 'WHERE', ] # 'K_JEQ', 'K_JSUP', 'K_JSEQ', 'K_JINF', 'K_JIEQ', 'IN', 'GROUP', 'ORDER' ]
+	for l in f2:
+		for k in keywords:
+			if k in l:
+				l = l.replace(k, '\n' + k)
+		aql_query += l
+	return aql_query
+			
+# -----------------------------------------------------------------------------
+import os, sys
+
+if __name__ == '__main__':
+
+	query = ''
+	f = open(sys.argv[1], 'r')
+	for line in f:
+		query += line.strip() + ' '
+		if ';' in line:
+			stmts = Statements()
+			stmts.parse(query)
+			
+			print ''
+			print kjeq_parse(query)
+			print ''
+			print stmts.to_sql('\n')
+			print ''
+			
+			query = ''
