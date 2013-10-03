@@ -19,7 +19,7 @@ class QueryGenerator:
 						self._values.append([ident] + [' ,' * (len(p)-1) + ' ' + ' '.join(p) for p in util.permut(values)])
 					else:	
 						self._values.append([ident] + values)
-					
+		
 	#
 	#
 	def next(self):
@@ -67,11 +67,15 @@ def parse(f):
 			ops[op_name] = values
 		elif line.strip() != "":
 			base += line
+		if ';' in line:
+			break
 
 	idents = []
 	for op_name in ops:
 		idents += re.findall('\[' + op_name + '_[0-9]+\]', base)
 
+	idents = set(idents)
+		
 	if ';' in base:
 		gen = QueryGenerator(base, idents, ops)
 		return gen
@@ -123,3 +127,4 @@ if __name__ == '__main__':
 
 	for query in iterate(sys.argv[1]):
 		print query
+		
