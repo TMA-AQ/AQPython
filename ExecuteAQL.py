@@ -1,4 +1,4 @@
-import sys, os, tempfile
+import sys, os, time, tempfile
 
 class ExecuteAQL:
 
@@ -23,11 +23,12 @@ class ExecuteAQL:
 		cmd_str = self.aq_engine_tests + " --queries \"" + aql_file.name + "\"" 
 		cmd_str += " --root-path=" + self.db_path
 		cmd_str += " --db-name=" + self.db_name 
-		cmd_str += " --log-level=2 "
 		cmd_str += " --aq-engine=" + self.aq_engine
-		cmd_str += " --check-result -v > result.txt "
+		cmd_str += " --display --log-level=2 > result.txt "
 		# print cmd_str
+		t = time.time()
 		rc = os.system(cmd_str)
+		t = time.time() - t
 		
 		# get results as rows
 		f = open('result.txt', 'r')
@@ -42,12 +43,15 @@ class ExecuteAQL:
 				rows.append(row)
 		f.close()
 
-		return (rc, rows)
+		return (rc, t, rows)
 		
 		
 	#
 	# execute aq engine
 	def run_aq_engine(self, ini_filename, ident, mode):
 		cmd_str = self.aq_engine + ' ' + ini_filename + ' ' + ident + ' ' + mode
-		os.system(cmd_str)
+		t = time.time()
+		rc = os.system(cmd_str)
+		t = time.time() - t
+		return (rc, t)
 		

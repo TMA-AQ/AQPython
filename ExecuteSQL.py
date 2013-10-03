@@ -1,4 +1,5 @@
 import MySQLdb as mdb
+import time
 
 class ExecuteSQL:
 	
@@ -31,8 +32,9 @@ class ExecuteSQL:
 
 	#
 	# execute sql query	and get results		
-	def execute_and_fetch(self, query):		
+	def execute_and_fetch(self, query):
+		t = time.time()
 		self.cur.execute(query)
-		# rows = self.cur.fetchall()
 		rows = [ r for r in self.cur.fetchall() ]
-		return rows
+		t = time.time() - t
+		return (0, t, rows)
