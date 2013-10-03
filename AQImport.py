@@ -166,8 +166,7 @@ def import_aq_database(opts, force=False):
 		generate_base_desc(con, opts.aq_db_name, opts.aq_db_path + '/' + opts.aq_db_name + '/base_struct/base.aqb')
 		export_data(con, opts.aq_db_path + '/' + opts.aq_db_name + '/data_orga/tables/')
 	
-		# loader.load_data('aq-tools', db_ini_filename) # FIXME
-		loader.load_data('AQTools', db_ini_filename) # FIXME
+		loader.load_data(opts.aq_tools, db_ini_filename) # FIXME
 		
 	except Exception, e:
 		print "IMPORT ERROR: %s" % e.message
@@ -206,6 +205,12 @@ if __name__ == '__main__':
 												type="string", 
 												dest="aq_loader", 
 												default="aq-loader", 
+												help='loader executable [default: %default]')				
+	aq_options.add_option('', '--aq-tools', 
+												action="store", 
+												type="string", 
+												dest="aq_tools", 
+												default="aq-tools", 
 												help='loader executable [default: %default]')				
 										
 	#
