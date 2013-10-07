@@ -1,4 +1,5 @@
 import sys, os, time, tempfile
+import AlgoQuestDB as aq
 
 class ExecuteAQL:
 
@@ -10,9 +11,22 @@ class ExecuteAQL:
 		self.db_name = db_name
 		self.aq_engine = aq_engine
 		
+		self.cfg = aq.Settings()
+		self.cfg.dbPath = db_path + '/' + db_name + '/'
+		self.cfg.engine = aq_engine
+		self.cfg.ident = 'test_aq_engine'
+		self.cfg.index = False
+		self.cfg.count = False
+		
 	#
 	# execute aql query and get results
 	def execute(self, query, verbose=True):
+			
+		t = time.time()	
+		rows = aq.Execute(self.cfg, query)
+		t = time.time() - t
+		rc = 0 # TODO
+		return (rc, t, rows[1:])
 		
 		# save aql query and sql query
 		aql_file = open('tmp.aql', 'w')

@@ -73,6 +73,7 @@ def parse_option(cfg):
 	section = 'Database Generation Options'
 	db_gen_options = OptionGroup(parser, section)
 	db_gen_options.add_option('', '--generate-db', action="store_true", dest="generate_db", default=cfg.getboolean(section, 'generate-db'), help="generate database [default: %default]")
+	db_gen_options.add_option('', '--generate-mode', action="store", type="string", dest="generate_mode", default=cfg.get(section, 'generate-mode'), help='generation mode[default: %default]')
 	db_gen_options.add_option('', '--nb-tables', action="store", type="int", dest="nb_tables", default=cfg.get(section, 'nb-tables'), help="nb tables to generate [default: %default]")
 	db_gen_options.add_option('', '--nb-rows', action="store", type="int", dest="nb_rows", default=cfg.get(section, 'nb-rows'), help="nb rows generate for each tables [default: %default]")
 	db_gen_options.add_option('', '--min-value', action="store", type="int", dest="min_value", default=cfg.get(section, 'min-value'), help="minimal value generate in table t1 [default: %default]")
@@ -134,7 +135,7 @@ def check_database(queries_file, exec_sql, exec_aql, stop_on_failure=False, verb
 
 		rc, sql_time, sql_rows = exec_sql.execute_and_fetch(sql_query)
 		rc, aql_time, aql_rows = exec_aql.execute(aql_query)
-			
+
 		if (rc != 0) or (not util.row_in(sql_rows, aql_rows)) or (not util.row_in(aql_rows, sql_rows)):
 			nb_error += 1
 			if verbose:
@@ -279,7 +280,8 @@ if __name__ == '__main__':
 
 		#
 		# Database Generator
-		db_gen = DataBaseGenerator.DBGen(opts.nb_tables, opts.nb_rows, opts.min_value, opts.max_value, opts.all_values, exec_sql)
+		db_gen = DataBaseGenerator.DBGen(opts.nb_tables, opts.nb_rows, opts.min_value, opts.max_value, 
+																		 opts.all_values, opts.generate_mode, exec_sql)
 		# db_gen = LogAnalyzer.DBGen(exec_sql, './aq_test_log_2_tables_errors.xml') # FIXME
 
 		#

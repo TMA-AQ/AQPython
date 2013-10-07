@@ -2,10 +2,15 @@ import random
 from ExecuteSQL import ExecuteSQL
 
 # ------------------------------------------------------------------------------
-def __generate_table__(r_min, r_max):
+def __generate_table__(r_min, r_max, mode):
 	l = r_max - r_min
-	(t1_min, t1_max) = (r_min, r_min + l/4)
-	(t2_min, t2_max) = (r_min + l/2, r_max)
+	if mode == 'random':
+		(t1_min, t1_max) = (r_min, r_max)
+		(t2_min, t2_max) = (r_min, r_max)
+	else:
+		(t1_min, t1_max) = (r_min, r_min + l/4)
+		(t2_min, t2_max) = (r_min + l/2, r_max)
+	
 	(t1, t2) = ([], [])
 	
 	end = False
@@ -20,6 +25,9 @@ def __generate_table__(r_min, r_max):
 		# print '(t1 , t2) : ( [', t1_min, t1_max, '] , [', t2_min, t2_max, '] )'
 
 		yield [ t1 , t2 ]
+				
+		if mode == 'random':
+			break
 				
 		(t1, t2) = ([], [])
 
@@ -69,17 +77,20 @@ def print_base(tables, rows):
 		print tables[i], rows[i]
 
 # ------------------------------------------------------------------------------
-def generate(nb_tables, nb_rows, r_min, r_max, all_values=False):
+def generate(nb_tables, nb_rows, r_min, r_max, all_values, mode):
 
 	if nb_rows == -1:
 		yield (None, None)
 		return
 
-	for tables_values in __generate_table__(r_min, r_max):
+	for tables_values in __generate_table__(r_min, r_max, mode):
 		
 		for i in range(len(tables_values) + 1, nb_tables + 1):
 			# print 'use random values between', r_min, 'and', r_max, 'for table', 't' + str(i)
-			tables_values.append([v for v in range(r_min - 10, r_max + 10)]) # FIXME
+			if mode == 'random':
+				tables_values.append(range(r_min, r_max + 1))
+			else:
+				tables_values.append([v for v in range(r_min - 10, r_max + 10)]) # FIXME
 		
 		# print 'Generate database with values:'
 		# id = 1
@@ -95,13 +106,13 @@ def generate(nb_tables, nb_rows, r_min, r_max, all_values=False):
 			rows = []
 			for t in tables_values:
 				rows.append([ v for v in t ])
-		else: # add min and max
+		elif mode != 'random': # add min and max
 			rows = []
 			for t in tables_values:
 				rows.append([min(t), max(t)])
 				
 		for j in range(len(tables_values)):
-			for i in range(nb_rows - 2):
+			for i in range(nb_rows - len(rows[j])):
 				rows[j].append( tables_values[j][random.randint(0, len(tables_values[j]) - 1)] )
 
 		yield ([ 't' + str(id) for id in range(1, nb_tables + 1) ], rows)
@@ -135,15 +146,28 @@ def load(con, tables, rows):
 
 # ------------------------------------------------------------------------------
 class DBGen:
-	def __init__(self, nb_tables, nb_rows, min_value, max_value, all_values, exec_sql):
+	def __init__(self, nb_tables, nb_rows, min_value, max_value, all_values, mode, exec_sql):
 		self._nb_tables = nb_tables
 		self._nb_rows = nb_rows
 		self._min_value = min_value
 		self._max_value = max_value
 		self._all_values = all_values
+		self._mode = mode
 		self._exec_sql = exec_sql
 
 	def iterate(self):
-		for (tables, rows) in generate(self._nb_tables, self._nb_rows, self._min_value, self._max_value, self._all_values):
-			load(self._exec_sql, tables, rows)
-			yield (tables, rows)
+		if self._nb_rows == -1:
+			yield([], [])
+		else:
+			for (tables, rows) in generate(self._nb_tables, self._nb_rows, self._min_value, self._max_value, self._all_values, self._mode):
+				load(self._exec_sql, tables, rows)
+				yield (tables, rows)
+
+# ------------------------------------------------------------------------------
+if __name__ == '__main__':
+	exec_sql = ExecuteSQL('localhost', 'tma', 'AlgoQuest', 'algoquest')
+	db_gen = DBGen(4, 10, 1, 20, False, 'random', exec_sql)
+	for tables, rows in db_gen.iterate():
+		print tables
+		for r in rows:
+			print r

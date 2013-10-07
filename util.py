@@ -18,24 +18,41 @@ def row_in(rows1, rows2):
 	if len(rows1) != len(rows2):
 		return False
 
-	for r1 in rows1:
+	for i1 in range(len(rows1)):
 		
+		if len(rows1[i1]) != len(rows2[i1]):
+			return False
+				
+		# check rows2[i1] first		
+		match = True	
+		for k in range(len(rows1[i1])):
+			vr1 = str(rows1[i1][k])
+			vr2 = str(rows2[i1][k])
+			if vr1 == 'None':
+				vr1 = 'NULL'
+			if vr2 == 'None':
+				vr2 = 'NULL'
+			if vr1 != vr2:
+				match = False
+				break
+		if match:
+			return True
+			
+		# if not rows1[i1] and rows2[i1] are not equal => check all rows2
 		find = False
-		for r2 in rows2:
-		
-			if len(r1) != len(r2):
-				return False
-		
+		for i2 in range(len(rows2)):
+
 			match = True
-			for i in range(len(r1)):
-				vr1 = str(r1[i])
-				vr2 = str(r2[i])
+			for k in range(len(rows1[i1])):
+				vr1 = str(rows1[i1][k])
+				vr2 = str(rows2[i2][k])
 				if vr1 == 'None':
 					vr1 = 'NULL'
 				if vr2 == 'None':
 					vr2 = 'NULL'
 				if vr1 != vr2:
 					match = False
+					break
 
 			if match:
 				find = True
