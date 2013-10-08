@@ -232,7 +232,7 @@ class Statements:
 # -------------------------------------------------------------------------------
 def kjeq_parse(query):
 	cmd = 'aq-engine-tests --query="' + query.replace('\n', ' ') + '" --parse > tmp.aql'
-	print cmd
+	# print cmd
 	os.system(cmd)
 	aql_query = ''
 	f2 = open('tmp.aql', 'r')
@@ -252,6 +252,8 @@ if __name__ == '__main__':
 	query = ''
 	f = open(sys.argv[1], 'r')
 	for line in f:
+		if line.strip()[0:2] == '--':
+			continue
 		query += line.strip() + ' '
 		if ';' in line:
 			stmts = Statements()

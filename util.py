@@ -13,7 +13,7 @@ def permut(values):
 		
 #
 #
-def row_in(rows1, rows2):
+def row_in(rows1, rows2, ordered=False):
 
 	if len(rows1) != len(rows2):
 		return False
@@ -38,7 +38,10 @@ def row_in(rows1, rows2):
 		if match:
 			return True
 			
-		# if not rows1[i1] and rows2[i1] are not equal => check all rows2
+		if ordered:
+			return False
+			
+		# if not rows1[i1] and rows2[i1] are not equal and ordered is not important then check all rows[i1] on all rows2
 		find = False
 		for i2 in range(len(rows2)):
 

@@ -136,7 +136,13 @@ def check_database(queries_file, exec_sql, exec_aql, stop_on_failure=False, verb
 		rc, sql_time, sql_rows = exec_sql.execute_and_fetch(sql_query)
 		rc, aql_time, aql_rows = exec_aql.execute(aql_query)
 
-		if (rc != 0) or (not util.row_in(sql_rows, aql_rows)) or (not util.row_in(aql_rows, sql_rows)):
+		if rc == 0:
+			if ('ORDER' in aql_query) and (not util.row_in(sql_rows, aql_rows, True)):
+				rc = 1
+			elif (not util.row_in(sql_rows, aql_rows)) or (not util.row_in(aql_rows, sql_rows)):
+				rc = 1
+		
+		if rc != 0:
 			nb_error += 1
 			if verbose:
 				print_query(sys.stderr, 'ERROR: query failed', aql_query, sql_query, aql_rows, sql_rows)
