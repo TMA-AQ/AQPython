@@ -3,7 +3,7 @@
 import os
 import sys
 import shutil
-import MySQLdb as mdb
+import ExecuteSQL
 import collections
 from optparse import OptionParser, OptionGroup
 
@@ -57,33 +57,27 @@ def generate_ini(db_path, db_name, aq_engine, aq_loader):
 	
 #
 # retrieve data from original database
-def generate_base_desc(con, db_name, base_desc_filename):
-	cur = con.cursor()
-	
-	cur.execute('show tables ;')
-	tables = cur.fetchall()
+def generate_base_desc(exec_sql, db_name, base_desc_filename):
+	tables = exec_sql.get_tables()
 
 	fdesc = open(base_desc_filename, 'w')
 	fdesc.write(db_name)
 	fdesc.write('\n')
-	fdesc.write(str(cur.rowcount))
+	fdesc.write(str(len(tables)))
 	fdesc.write('\n')
 	fdesc.write('\n')
 	
 	table_id = 1
-	for (table_name, ) in cur:
+	for (table_name, ) in tables:
 	
-		cur.execute('select * from ' + table_name + ' limit 1')
-		desc = cur.description
-
-		cur.execute('select count(*) from ' + table_name)
-		row = cur.fetchone()
+		desc = exec_sql.get_description(table_name)
+		r, t, row = exec_sql.execute_and_fetch('select count(*) from ' + table_name)
 		
 		fdesc.write('"' + table_name + '"')
 		fdesc.write(' ')
 		fdesc.write(str(table_id))
 		fdesc.write(' ')
-		fdesc.write(str(row[0]))
+		fdesc.write(str(row[0][0]))
 		fdesc.write(' ')
 		fdesc.write(str(len(desc)))
 		fdesc.write('\n')
@@ -91,27 +85,25 @@ def generate_base_desc(con, db_name, base_desc_filename):
 		
 		column_id = 1
 		for c in desc:
-			fdesc.write('"' + c[0] + '"')
-			fdesc.write(' ')
-			fdesc.write(str(column_id))
-			fdesc.write(' 1 INT\n')
+			fdesc.write('"' + str(c['name']) + '"')
+			fdesc.write(' ' + str(column_id))
+			fdesc.write(' ' + str(c['size']))
+			fdesc.write(' ' + str(c['type']).upper())
+			fdesc.write('\n')
 			column_id += 1
 		fdesc.write('\n')
 
 	fdesc.close()
 #
 # 
-def export_data(con, dir):
-	cur = con.cursor()
-	cur.execute('show tables ;')
-	tables = cur.fetchall()
+def export_data(exec_sql, dir):
+	
+	tables = exec_sql.get_tables()
 
-	for (table_name, ) in cur:
+	for (table_name, ) in tables:
 		f = open(dir + table_name + '.txt', 'w')
-		cur.execute('select * from  ' + table_name)
-		desc = cur.description
-		for i in range(cur.rowcount):
-			row = cur.fetchone()
+		r, t, rows = exec_sql.execute_and_fetch('select * from  ' + table_name)
+		for row in rows:
 			row_str = ""
 			for i in range(len(row)):
 				row_str += "\"" + str(row[i]) + "\""
@@ -156,23 +148,20 @@ def clean_aq_database(db_path, db_name):
 #
 def import_aq_database(opts, force=False):
 
-	try:
-		# print 'connect to ', opts.db_host, opts.db_user, opts.db_pass, opts.db_name
-		con = mdb.connect(opts.db_host, opts.db_user, opts.db_pass, opts.db_name)
+	# try:
+
+		exec_sql = ExecuteSQL.ExecuteSQL(opts.db_type, opts.db_host, opts.db_user, opts.db_pass, opts.db_name)
 		
 		create_db_directories(opts.aq_db_path, opts.aq_db_name, force)
 		db_ini_filename = generate_ini(opts.aq_db_path, opts.aq_db_name, opts.aq_engine, opts.aq_loader)
 
-		generate_base_desc(con, opts.aq_db_name, opts.aq_db_path + '/' + opts.aq_db_name + '/base_struct/base.aqb')
-		export_data(con, opts.aq_db_path + '/' + opts.aq_db_name + '/data_orga/tables/')
+		generate_base_desc(exec_sql, opts.aq_db_name, opts.aq_db_path + '/' + opts.aq_db_name + '/base_struct/base.aqb')
+		export_data(exec_sql, opts.aq_db_path + '/' + opts.aq_db_name + '/data_orga/tables/')
 	
-		loader.load_data(opts.aq_tools, db_ini_filename) # FIXME
+		loader.load_data(opts.aq_tools, opts.aq_db_name) # FIXME
 		
-	except Exception, e:
-		print "IMPORT ERROR: %s" % e.message
-	finally:
-		if con:
-			con.close()
+	# except Exception, e:
+		# print "IMPORT ERROR: %s" % e.message
 
 #
 #
@@ -212,10 +201,21 @@ if __name__ == '__main__':
 												dest="aq_tools", 
 												default="aq-tools", 
 												help='loader executable [default: %default]')				
+	aq_options.add_option('', '--force',
+												action="store_true",
+												dest="force",
+												default=False,
+												help="force creation even if directory already exist")
 										
 	#
 	# source database
 	source_db_options = OptionGroup(parser, "Source database options")
+	source_db_options.add_option('', '--db-type', 
+															action="store", 
+															type="string", 
+															dest="db_type", 
+															default="MySQL", 
+															help='database type [Oracle|MySQL] [default: %default]')
 	source_db_options.add_option('', '--db-host', 
 															action="store", 
 															type="string", 
@@ -252,8 +252,6 @@ if __name__ == '__main__':
 		sys.exit(-1)
 	
 	try:
-			import_aq_database(opts)
+			import_aq_database(opts, opts.force)
 	except ImportError, e:
 		print "Error: %s" % (e.message)
-	except mdb.Error, e:
-		print "Error: %d: %s" % (e.args[0], e.args[1])

@@ -77,74 +77,6 @@ def print_base(tables, rows):
 		print tables[i], rows[i]
 
 # ------------------------------------------------------------------------------
-def generate(nb_tables, nb_rows, r_min, r_max, all_values, mode):
-
-	if nb_rows == -1:
-		yield (None, None)
-		return
-
-	for tables_values in __generate_table__(r_min, r_max, mode):
-		
-		for i in range(len(tables_values) + 1, nb_tables + 1):
-			# print 'use random values between', r_min, 'and', r_max, 'for table', 't' + str(i)
-			if mode == 'random':
-				tables_values.append(range(r_min, r_max + 1))
-			else:
-				tables_values.append([v for v in range(r_min - 10, r_max + 10)]) # FIXME
-		
-		# print 'Generate database with values:'
-		# id = 1
-		# for t in tables_values:
-		# 	print 't' + str(id) + ' : ', t
-		#  	id += 1
-
-		rows = []
-		for t in range(nb_tables):
-			rows.append([])
-
-		if all_values:
-			rows = []
-			for t in tables_values:
-				rows.append([ v for v in t ])
-		elif mode != 'random': # add min and max
-			rows = []
-			for t in tables_values:
-				rows.append([min(t), max(t)])
-				
-		for j in range(len(tables_values)):
-			for i in range(nb_rows - len(rows[j])):
-				rows[j].append( tables_values[j][random.randint(0, len(tables_values[j]) - 1)] )
-
-		yield ([ 't' + str(id) for id in range(1, nb_tables + 1) ], rows)
-		
-# ------------------------------------------------------------------------------
-def load(con, tables, rows):
-
-	# check
-	if len(rows) != len(tables):
-		raise Exception("error generating database")
-
-	# create tables
-	for table in tables:
-		con.execute_and_commit('drop table if exists ' + table + ';')
-		con.execute_and_commit('create table ' + table + '(id int not null, val_1 int not null) engine=innodb ;')
-	
-	# generate queries
-	queries = []
-	for i in range(len(rows)):
-		id = 1
-		queries.append('insert into ' + tables[i] + ' (id, val_1) values (' + str(id) + ', ' + str(rows[i][0]) + ')')
-		id += 1
-		for j in range(1, len(rows[i])):
-			queries[i] += ', (' + str(id) + ', ' + str(rows[i][j]) + ')'
-			id += 1
-
-	# insert values
-	for query in queries:
-		# print query
-		con.execute_and_commit(query + ';')
-
-# ------------------------------------------------------------------------------
 class DBGen:
 	def __init__(self, nb_tables, nb_rows, min_value, max_value, all_values, mode, exec_sql):
 		self._nb_tables = nb_tables
@@ -159,13 +91,83 @@ class DBGen:
 		if self._nb_rows == -1:
 			yield([], [])
 		else:
-			for (tables, rows) in generate(self._nb_tables, self._nb_rows, self._min_value, self._max_value, self._all_values, self._mode):
-				load(self._exec_sql, tables, rows)
+			for (tables, rows) in self.generate():
+				self.load(tables, rows)
 				yield (tables, rows)
+
+	# ------------------------------------------------------------------------------
+	def generate(self):
+
+		if self._nb_rows == -1:
+			yield (None, None)
+			return
+
+		for tables_values in __generate_table__(self._min_value, self._max_value, self._mode):
+			
+			for i in range(len(tables_values) + 1, self._nb_tables + 1):
+				# print 'use random values between', self._min_value, 'and', self._max_value, 'for table', 't' + str(i)
+				if self._mode == 'random':
+					tables_values.append(range(self._min_value, self._max_value + 1))
+				else:
+					tables_values.append([v for v in range(self._min_value - 10, self._max_value + 10)]) # FIXME
+			
+			# print 'Generate database with values:'
+			# id = 1
+			# for t in tables_values:
+			# 	print 't' + str(id) + ' : ', t
+			#  	id += 1
+
+			rows = []
+			for t in range(self._nb_tables):
+				rows.append([])
+
+			if self._all_values:
+				rows = []
+				for t in tables_values:
+					rows.append([ v for v in t ])
+			elif self._mode != 'random': # add min and max
+				rows = []
+				for t in tables_values:
+					rows.append([min(t), max(t)])
+					
+			for j in range(len(tables_values)):
+				for i in range(self._nb_rows - len(rows[j])):
+					rows[j].append( tables_values[j][random.randint(0, len(tables_values[j]) - 1)] )
+
+			yield ([ 't' + str(id) for id in range(1, self._nb_tables + 1) ], rows)
+			
+	# ------------------------------------------------------------------------------
+	def load(self, tables, rows):
+
+		# check
+		if len(rows) != len(tables):
+			raise Exception("error generating database")
+
+		# create tables
+		for table in tables:
+			if self._exec_sql.sgbd == 'Oracle':
+				self._exec_sql.execute_and_commit('drop table ' + table)
+				self._exec_sql.execute_and_commit('create table ' + table + '(id int primary key, v1 int not null)')
+			elif self._exec_sql.sgbd == 'MySQL':
+				self._exec_sql.execute_and_commit('drop table if exists ' + table + ';')
+				self._exec_sql.execute_and_commit('create table ' + table + '(id int primary key, v1 int not null) engine=innodb ;')
+			
+		# generate queries
+		queries = []
+		for i in range(len(rows)):
+			id = 1
+			for row in rows[i]:
+				queries.append('insert into ' + tables[i] + ' (id, v1) values (' + str(id) + ', ' + str(row) + ')')
+				id += 1
+
+		# insert values
+		for query in queries:
+			# print query
+			self._exec_sql.execute_and_commit(query)
 
 # ------------------------------------------------------------------------------
 if __name__ == '__main__':
-	exec_sql = ExecuteSQL('localhost', 'tma', 'AlgoQuest', 'algoquest')
+	exec_sql = ExecuteSQL('Oracle', 'localhost', 'tma', 'AlgoQuest', 'test')
 	db_gen = DBGen(4, 10, 1, 20, False, 'random', exec_sql)
 	for tables, rows in db_gen.iterate():
 		print tables

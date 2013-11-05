@@ -24,12 +24,14 @@ def print_query(out, msg, aql_query, sql_query, aql_rows, sql_rows):
 	print >> sys.stderr, '=== AQL ==='
 	print >> sys.stderr, aql_query
 	print >> sys.stderr, '--- result ---'
-	print >> sys.stderr, aql_rows
+	for r in aql_rows:
+		print >> sys.stderr, '(' + ', '.join(str(v) for v in r) + ')'
 	print >> sys.stderr, ''
 	print >> sys.stderr, '=== SQL ==='
 	print >> sys.stderr, sql_query.strip(' \n')
 	print >> sys.stderr, '--- result ---'
-	print >> sys.stderr, sql_rows
+	for r in sql_rows:
+		print >> sys.stderr, r
 	print >> sys.stderr, ''
 	print >> sys.stderr, '==========='
 	print >> sys.stderr, '==========='
@@ -55,6 +57,7 @@ def parse_option(cfg):
 	section = 'Source Database Options'
 	source_db_options = OptionGroup(parser, section)
 	source_db_options.add_option('', '--import-db', action="store_true", dest="import_db", default=cfg.getboolean(section, 'import-db'), help="import database [default: %default]")
+	source_db_options.add_option('', '--db-type', action="store", type="string", dest="db_type", default=cfg.get(section, 'db-type'), help='Database to use [Oracle|MySQL] [default: %default]')
 	source_db_options.add_option('', '--db-host', action="store", type="string", dest="db_host", default=cfg.get(section, 'db-host'), help='source database host [default: %default]')
 	source_db_options.add_option('', '--db-user', action="store", type="string", dest="db_user", default=cfg.get(section, 'db-user'), help='source database user [default: %default]')
 	source_db_options.add_option('', '--db-pass', action="store", type="string", dest="db_pass", default=cfg.get(section, 'db-pass'), help='source database password [default: %default]')
@@ -125,15 +128,15 @@ def check_database(queries_file, exec_sql, exec_aql, stop_on_failure=False, verb
 					
 		##################################################
 		# skip full outer because not supported by mysql #
-		if sql_query.lower().find('full outer') != -1:
+		if exec_sql.sgbd == 'MySQL' and sql_query.lower().find('full outer') != -1:
 			if verbose:
-				print "full outer not supported, skip query"
+				print "full outer not supported by MySQL, skip query"
 			continue
 		##################################################
 			
 		nb_checked += 1
 
-		rc, sql_time, sql_rows = exec_sql.execute_and_fetch(sql_query)
+		rc, sql_time, sql_rows = exec_sql.execute_and_fetch(sql_query.replace(';', ''))
 		rc, aql_time, aql_rows = exec_aql.execute(aql_query)
 
 		if rc == 0:
@@ -159,12 +162,12 @@ def check_database(queries_file, exec_sql, exec_aql, stop_on_failure=False, verb
 			queries_log += '</SQL>\n'
 			queries_log += '<Results nb="' + str(len(aql_rows)) + '">\n'
 			for row in aql_rows:
-				queries_log += '<row>' + str(row) + '</row>'
+				queries_log += '<row>' + ','.join(str(v) for v in row) + '</row>\n'
 			queries_log += '\n'
 			queries_log += '</Results>\n'
 			queries_log += '<Expected nb="' + str(len(sql_rows)) + '">\n'
 			for row in sql_rows:
-				queries_log += '<row>' + str(row) + '</row>'
+				queries_log += '<row>' + str(row) + '</row>\n'
 			queries_log += '\n'
 			queries_log += '</Expected>\n'
 			queries_log += '</Query>\n'
@@ -269,7 +272,7 @@ if __name__ == '__main__':
 		if opts.check_db and (opts.queries_file is None):
 			raise Exception('You need to provide a queries file (.aql or .gen) (--queries-file)')
 	
-		exec_sql = ExecuteSQL(opts.db_host, opts.db_user, opts.db_pass, opts.db_name)
+		exec_sql = ExecuteSQL(opts.db_type, opts.db_host, opts.db_user, opts.db_pass, opts.db_name)
 		exec_aql = ExecuteAQL(opts.aq_engine_tests, opts.aq_db_path, opts.aq_db_name, opts.aq_engine) # FIXME
 
 		#

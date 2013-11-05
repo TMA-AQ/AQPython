@@ -1,5 +1,10 @@
 import sys, os, time, tempfile
-import AlgoQuestDB as aq
+try:
+	import AlgoQuestDB as aq
+except:
+	None
+
+sys.path.insert(0, 'E:/AlgoQuest_DEV/AQSuite/x64/Debug')
 
 class ExecuteAQL:
 
@@ -22,40 +27,47 @@ class ExecuteAQL:
 	# execute aql query and get results
 	def execute(self, query, verbose=True):
 			
-		t = time.time()	
-		rows = aq.Execute(self.cfg, query)
-		t = time.time() - t
-		rc = 0 # TODO
-		return (rc, t, rows[1:])
-		
-		# save aql query and sql query
-		aql_file = open('tmp.aql', 'w')
-		aql_file.write(query)
-		aql_file.close()
-		
-		# execute
-		cmd_str = self.aq_engine_tests + " --queries \"" + aql_file.name + "\"" 
-		cmd_str += " --root-path=" + self.db_path
-		cmd_str += " --db-name=" + self.db_name 
-		cmd_str += " --aq-engine=" + self.aq_engine
-		cmd_str += " --display --log-level=2 > result.txt "
-		# print cmd_str
-		t = time.time()
-		rc = os.system(cmd_str)
-		t = time.time() - t
-		
-		# get results as rows
-		f = open('result.txt', 'r')
-		f.readline()
-		rows = []
-		for line in f:
-			row = line.split(';')
-			row.pop()
-			for i in range(len(row)):
-				row[i] = row[i].strip()
-			if row:
-				rows.append(row)
-		f.close()
+		rc = 0
+		if aq != None:
+			try:
+				aq.SetLogLevel(2)
+				t = time.time()	
+				rows = aq.Execute(self.cfg, query)
+				t = time.time() - t
+				rc, t, rows = rc, t, rows[1:]
+			except:
+				print 'ERROR' 
+				rc, t, rows = 1, 0, []
+		else:
+					
+			# save aql query and sql query
+			aql_file = open('tmp.aql', 'w')
+			aql_file.write(query)
+			aql_file.close()
+			
+			# execute
+			cmd_str = self.aq_engine_tests + " --queries \"" + aql_file.name + "\"" 
+			cmd_str += " --root-path=" + self.db_path
+			cmd_str += " --db-name=" + self.db_name 
+			cmd_str += " --aq-engine=" + self.aq_engine
+			cmd_str += " --display --log-level=2 --force > result.txt "
+			# print cmd_str
+			t = time.time()
+			rc = os.system(cmd_str)
+			t = time.time() - t
+			
+			# get results as rows
+			f = open('result.txt', 'r')
+			f.readline()
+			rows = []
+			for line in f:
+				row = line.split(';')
+				row.pop()
+				for i in range(len(row)):
+					row[i] = row[i].strip()
+				if row:
+					rows.append(row)
+			f.close()
 
 		return (rc, t, rows)
 		
@@ -69,3 +81,20 @@ class ExecuteAQL:
 		t = time.time() - t
 		return (rc, t)
 		
+#
+#
+if __name__ == '__main__':
+	
+	aq.SetLogLevel(2)
+	
+	query  = ' SELECT , . T1 ID . T2 ID\n'
+	query += ' FROM , T1 T2 \n'
+	query += ' WHERE K_JEQ K_INNER . T2 ID K_INNER . T1 ID \n'
+ 
+	exec_aql = ExecuteAQL('aq-engine-tests', 'e:/AQ_DATABASES/DB/', 'algoquest', 'aq-engine')
+	r, t, rows = exec_aql.execute(query)
+	print len(rows)
+	for row in rows:
+		for v in row:
+			print v,
+		print ''

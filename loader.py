@@ -36,9 +36,9 @@ def __generate_loader_ini__(db_path):
 		
 #
 # call external Loader
-def load_data(loader_bin, db_ini_filename):
+def load_data(loader_bin, db_name):
 	# print loader_bin, ' --aq-ini', db_ini_filename, ' --load-db'
-  os.system(loader_bin + ' --aq-ini ' + db_ini_filename + ' --load-db' )
+  os.system(loader_bin + ' -n ' + db_name + ' --load-db > tmp.log' )
 	
 	# f = open(db_ini_filename)
 	# for line in f:
